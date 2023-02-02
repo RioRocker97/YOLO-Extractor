@@ -1,0 +1,7 @@
+.vscode/
+env4/
+runs/
+*.jpg
+*.png
+*.pt
+!res1.jpg
