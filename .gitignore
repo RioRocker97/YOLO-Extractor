@@ -5,3 +5,5 @@ runs/
 *.png
 *.pt
 !res1.jpg
+.env
+__pycache__/
