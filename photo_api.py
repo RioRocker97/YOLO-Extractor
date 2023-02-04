@@ -1,14 +1,34 @@
+"""
+Photo-API 
+A server-side application for processing image as the following
+- Detect Human in the image
+- extract human object 
+- Clean-up the original image after extracting human object by using Clip Drop's Inpainting API
+- Send Clean-up image and human pose image back via REST api
+
+INPUT (POST)
+- an original image in form-data with a key named 'original'
+OUTPUT
+- a JSON contained
+    - base > an clean-up base64 string image 
+    - human_pose > an Array of each human extracted from the original image in base64 string image
+"""
 from flask import Flask,request
 from flask import jsonify
 from asgiref.wsgi import WsgiToAsgi
 from ultralytics import YOLO
 from os import environ
 from base64 import b64encode
-import cv2
+from dotenv import load_dotenv
 import numpy as np
-import requests
+import cv2,requests
+load_dotenv()
 ###### GLOBAL FUNCTION #############
+# Add Clip Drop API key here as you wish
 CLIP_DROP_API_KEY = environ['CLIP_DROP']
+# choose any YOLOv8 Model according to how much traffic you would expect on the webapp
+# check https://github.com/ultralytics/ultralytics#Models at the Segmentation List for more information
+# Right Now i set it to yolov8l-seg.pt
 MODEL = YOLO(environ['YOLO_MODEL'])
 BGD_MODEL = np.zeros((1,65),np.float64)
 FGD_MODEL = np.zeros((1,65),np.float64)

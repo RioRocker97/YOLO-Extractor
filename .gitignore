@@ -7,3 +7,4 @@ runs/
 !res1.jpg
 .env
 __pycache__/
+*.zip
