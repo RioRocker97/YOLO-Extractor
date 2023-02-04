@@ -1,0 +1,12 @@
+FROM photo-api:base
+
+ENV PYTHONUNBUFFERED True
+ENV PYTHONDONTWRITEBYTECODE True
+
+WORKDIR /app
+COPY . ./
+
+RUN pwd; ls
+RUN pip uninstall flask; pip install flask[async] uvicorn[standard];pip list
+
+CMD exec gunicorn --bind :$PORT --workers 1 -k uvicorn.workers.UvicornWorker --threads 8 --timeout 60 photo_api:ASGI_APP

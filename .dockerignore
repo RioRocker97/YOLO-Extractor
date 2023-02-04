@@ -1,0 +1,14 @@
+Dockerfile
+README.md
+*.pyc
+*.pyo
+*.pyd
+__pycache__
+.pytest_cache
+
+.vscode/
+env1/
+__pycache__/
+runs/
+.gitignore
+*.jpg
