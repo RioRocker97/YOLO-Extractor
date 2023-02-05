@@ -15,6 +15,7 @@ OUTPUT
 """
 from flask import Flask,request
 from flask import jsonify
+from flask_cors import CORS
 from asgiref.wsgi import WsgiToAsgi
 from ultralytics import YOLO
 from os import environ
@@ -33,6 +34,7 @@ MODEL = YOLO(environ['YOLO_MODEL'])
 BGD_MODEL = np.zeros((1,65),np.float64)
 FGD_MODEL = np.zeros((1,65),np.float64)
 APP = Flask(__name__)
+CORS(APP)
 ASGI_APP = WsgiToAsgi(APP)
 ######## Image Segmentation ##############
 async def detectAndExtract(binary_base_image):
