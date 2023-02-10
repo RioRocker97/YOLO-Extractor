@@ -44,6 +44,7 @@ async def detectAndExtract(binary_base_image):
     real_mark = []
     human_img = []
     blank = np.zeros(image.shape,np.uint8)
+    blank_mask = np.zeros(image.shape,np.uint8)
     res = MODEL.predict(byteToImageArray(binary_base_image),stream=True)
     # Get Prediction Result
     for obj in res:
@@ -60,6 +61,7 @@ async def detectAndExtract(binary_base_image):
             each_mark[j][1] *= img_height
         contours = np.array(each_mark.astype(int))
         cv2.fillPoly(blank,pts=[contours],color=(255,255,255))
+    # Prepare Clean-Up Mask
     # Extract Human Mask
     for obj in human_mark:
         cropped = image[obj[1]:obj[3],obj[0]:obj[2]]
@@ -67,24 +69,27 @@ async def detectAndExtract(binary_base_image):
         final_cut = makeMask(cropped,cropped_mask)
         final_cut = makeBlackTransparent(final_cut)
         human_img.append(imageArrayToBase64String(final_cut))
-    return blank,human_img
+        cv2.rectangle(blank_mask, (obj[0]-50,obj[1]-50), (obj[2]+50,obj[3]+50), (255, 255, 255), -1)
+    return blank_mask,human_img
 ######## Background Removal ##############
-async def cleanUpOriginalImage(binary_base_image,human_mask_all):
-    #return imageArrayToBase64String(human_mask_all)
-    image = byteToImageArray(binary_base_image)
-    image = cv2.imencode('.jpg',image)[1].tobytes()
-    blank = cv2.imencode('.png',human_mask_all)[1].tobytes()
+def usingClipDropAPI(image_byte,mask_byte):
     r = requests.post('https://clipdrop-api.co/cleanup/v1',
     files = {
-        'image_file': ('image.jpg', image, 'image/jpeg'),
-        'mask_file': ('mask.png', blank, 'image/png')
+        'image_file': ('image.jpg', image_byte, 'image/jpeg'),
+        'mask_file': ('mask.png', mask_byte, 'image/png')
         },
     headers = { 'x-api-key': CLIP_DROP_API_KEY}
     )
     if (r.ok):
-        return imageArrayToBase64String(byteToImageArray(r.content),'.jpg')
+        return r.content
     else:
         r.raise_for_status()
+async def cleanUpOriginalImage(binary_base_image,human_mask_all):
+    # return imageArrayToBase64String(human_mask_all)
+    image = byteToImageArray(binary_base_image)
+    image = cv2.imencode('.jpg',image)[1].tobytes()
+    blank = cv2.imencode('.png',human_mask_all)[1].tobytes()
+    return imageArrayToBase64String(byteToImageArray(usingClipDropAPI(image,blank)),'.jpg')
 ######## Byte Data To NP Array Helper ############
 def byteToImageArray(byte_data):
     buff = np.frombuffer(byte_data,dtype=np.uint8)
